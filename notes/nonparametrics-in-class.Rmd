@@ -1,0 +1,228 @@
+---
+title: "Nonparametrics - Coding"
+output: html_document
+---
+
+
+## Read in the data
+
+```{r, error=F}
+library(readr)
+ree <- read_csv("../data/ree.csv")
+ree
+```
+
+
+
+## Need to install BDSA Package
+
+```{r}
+
+# install.packages("devtools")
+# devtools::install_github('alanarnholt/BSDA')
+```
+
+
+
+
+```{r}
+library(tidyverse)
+ree %>% 
+  summarize(mean_CF= mean(CF))
+
+
+ree %>% 
+  summarize(mean_nonCF= mean(Healthy))
+```
+
+
+
+
+```{r}
+library(tidyverse)
+ree %>% 
+  summarize(median_CF= median(CF))
+
+
+ree %>% 
+  summarize(median_nonCF= median(Healthy))
+```
+
+
+
+## The sign test
+
+
+```{r}
+library(BSDA)
+attach(ree)
+SIGN.test(CF, Healthy)
+detach()
+```
+
+
+
+
+
+
+
+## By "Hand"
+
+- Subtract Values
+
+```{r, eval=FALSE}
+library(tidyverse)
+ree <- ree %>%
+  mutate(diff = CF - Healthy)
+ree
+```
+
+
+```{r}
+binom.test(2, 13, p=0.5)
+binom.test(11, 13, p=0.5)
+```
+
+
+## Wilcoxon signed Rank Test
+
+```{r}
+wilcox.test(ree$CF, ree$Healthy, paired=TRUE)
+```
+
+
+
+
+## Wilcoxon Rank Sum Test
+
+```{r}
+cars <- as_data_frame(mtcars)
+cars
+
+```
+
+
+
+
+```{r}
+wilcox.test(cars$mpg, cars$am)
+
+cars %>%
+  group_by(am) %>%
+  summarize( median_am = median(mpg))
+```
+
+
+
+
+## Kruskal
+
+
+```{r}
+
+kruskal.test(data= cars, mpg~gear)
+
+
+cars %>%
+  group_by(gear) %>%
+  summarise(med_gear = median(mpg))
+```
+
+
+## Bootstrapping Regression Coefficients
+
+```{r, eval=F}
+# Bootstrap 95% CI for regression coefficients 
+library(boot)
+# function to obtain regression weights 
+bs <- function(formula, data, indices) {
+  d <- data[indices,] # allows boot to select sample 
+  fit <- lm(formula, data=d)
+  return(coef(fit)) 
+} 
+# bootstrapping with 1000 replications 
+results <- boot(data=mtcars, statistic=bs, 
+  	R=1000, formula=mpg~wt+disp)
+
+# view results
+results
+plot(results, index=1) # intercept 
+plot(results, index=2) # wt 
+plot(results, index=3) # disp 
+
+# get 95% confidence intervals 
+boot.ci(results, type="bca", index=1) # intercept 
+boot.ci(results, type="bca", index=2) # wt 
+boot.ci(results, type="bca", index=3) # disp
+```
+
+
+
+## Bootstraping $R^2$
+
+```{r, eval=F}
+# Bootstrap 95% CI for R-Squared
+library(boot)
+# function to obtain R-Squared from the data 
+rsq <- function(formula, data, indices) {
+  d <- data[indices,] # allows boot to select sample 
+  fit <- lm(formula, data=d)
+  return(summary(fit)$r.square)
+} 
+# bootstrapping with 1000 replications 
+results <- boot(data=mtcars, statistic=rsq, 
+  	R=1000, formula=mpg~wt+disp+gear+am)
+
+# view results
+results 
+plot(results)
+
+# get 95% confidence interval 
+boot.ci(results, type="bca")
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
